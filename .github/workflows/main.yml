@@ -56,6 +56,9 @@ jobs:
     name: Deploy to Production
     needs: build-and-push
     runs-on: [ self-hosted, deploy-fastapi ]
+    env:
+      ACTOR_LOWER: ${{ needs.build-and-push.outputs.actor_lower }}
+      REPO_LOWER: ${{ needs.build-and-push.outputs.repo_lower }}
 
     steps:
       - name: Deploy to Production
@@ -65,8 +68,8 @@ jobs:
           cd /home/ec2-user/jobspoon/fastapi
           docker-compose down
 
-          echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker pull ghcr.io/${{ env.ACTOR_LOWER }}/${{ env.REPO_LOWER }}:latest
+          echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u $ACTOR_LOWER --password-stdin
+          docker pull ghcr.io/$ACTOR_LOWER/$REPO_LOWER:latest
 
           docker image prune -f
           docker logout
