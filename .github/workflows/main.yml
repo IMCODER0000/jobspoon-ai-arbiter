@@ -70,10 +70,14 @@ jobs:
           REPO_LOWER=${{ needs.build-and-push.outputs.repo_lower }}
 
           cd /home/ec2-user/jobspoon/fastapi
-          docker-compose down
+          if [ -f docker-compose.yml ]; then
+            docker-compose down
+          else
+            echo "⚠ docker-compose.yml not found, skipping docker-compose down"
+          fi
 
           echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker pull ghcr.io/$REPO_LOWER:latest
+          docker pull ghcr.io/${REPO_LOWER}:latest
 
           docker image prune -f
           docker logout
