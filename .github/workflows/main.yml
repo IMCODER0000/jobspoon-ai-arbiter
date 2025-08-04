@@ -73,7 +73,7 @@ jobs:
           docker-compose down
 
           echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker pull ghcr.io/$ACTOR_LOWER/$REPO_LOWER:latest
+          docker pull ghcr.io/${{ secrets.GITHUB_ACTOR }}/$REPO_LOWER:latest
 
           docker image prune -f
           docker logout
