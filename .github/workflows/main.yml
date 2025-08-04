@@ -12,6 +12,10 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
+    outputs:
+      actor_lower: ${{ steps.vars.outputs.actor_lower }}
+      repo_lower: ${{ steps.vars.outputs.repo_lower }}
+
     permissions:
       contents: read
       packages: write
@@ -23,8 +27,8 @@ jobs:
       - name: Set lowercase env vars
         id: vars
         run: |
-          echo "ACTOR_LOWER=$(echo '${{ github.actor }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-          echo "REPO_LOWER=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "actor_lower=$(echo '${{ github.actor }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+          echo "repo_lower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -47,8 +51,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ env.ACTOR_LOWER }}/${{ env.REPO_LOWER }}:latest
-            ghcr.io/${{ env.ACTOR_LOWER }}/${{ env.REPO_LOWER }}:${{ github.sha }}
+            ghcr.io/${{ steps.vars.outputs.actor_lower }}/${{ steps.vars.outputs.repo_lower }}:latest
+            ghcr.io/${{ steps.vars.outputs.actor_lower }}/${{ steps.vars.outputs.repo_lower }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -56,19 +60,19 @@ jobs:
     name: Deploy to Production
     needs: build-and-push
     runs-on: [ self-hosted, deploy-fastapi ]
-    env:
-      ACTOR_LOWER: ${{ needs.build-and-push.outputs.actor_lower }}
-      REPO_LOWER: ${{ needs.build-and-push.outputs.repo_lower }}
 
     steps:
       - name: Deploy to Production
         run: |
           echo "▶ Deploying to Production Server..."
 
+          ACTOR_LOWER=${{ needs.build-and-push.outputs.actor_lower }}
+          REPO_LOWER=${{ needs.build-and-push.outputs.repo_lower }}
+
           cd /home/ec2-user/jobspoon/fastapi
           docker-compose down
 
-          echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u $ACTOR_LOWER --password-stdin
+          echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker pull ghcr.io/$ACTOR_LOWER/$REPO_LOWER:latest
 
           docker image prune -f
