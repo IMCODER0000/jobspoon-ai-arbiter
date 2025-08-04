@@ -62,7 +62,7 @@ jobs:
         run: |
           echo "▶ Deploying to Production Server..."
 
-          cd /home/ec2-user/snack/fastapi
+          cd /home/ec2-user/jobspoon/fastapi
           docker-compose down
 
           echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
