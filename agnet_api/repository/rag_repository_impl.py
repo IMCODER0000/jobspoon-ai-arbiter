@@ -18,7 +18,7 @@ class RagRepositoryImpl(RagRepository):
         documents = result["documents"][0] if result["documents"] else []
         return documents if documents else ["(메인 회사 DB에서 적절한 질문을 찾지 못했습니다.)"]
 
-    def rag_fallback(self, situation: str, userToken: str) -> list:
+    def rag_fallback(self, situation: str, userToken: str = "unknown") -> list:
         print(f" AGENT RAG repository - rag_fallback 실행: {userToken}")
 
         fallback_collection = get_chroma_collection("fallback")

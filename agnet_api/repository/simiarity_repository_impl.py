@@ -52,7 +52,7 @@ class SimilarityRepositoryImpl(SimilarityRepository):
         for j in rag_fallback_result:
             j_embedding = get_embedding(j)
             score = cosine_similarity([answer_embedding], [j_embedding])[0][0]
-            print(f" 질문: {i} | 유사도: {score:.4f}")
+            print(f" 질문: {j} | 유사도: {score:.4f}")
             if score > fallback_rag_score:
                 fallback_rag_score = score  # 유사도 최고점수
                 fallback_rag_question = j  # 이건 유사도가 제일 높은 문장인거같고

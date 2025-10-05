@@ -39,7 +39,7 @@ class AgentServiceImpl:
         rag_fallback_result = []
         if rag_main_result == ["(메인 회사 DB에서 적절한 질문을 찾지 못했습니다.)"]:
             print(f" RAG Main 실패 → Fallback DB 조회 진행")
-            rag_fallback_result = self.ragRepository.rag_fallback(situation)
+            rag_fallback_result = self.ragRepository.rag_fallback(situation, userToken)
             print(f" RAG Fallback 결과: {rag_fallback_result}")
         # RAG 2차 (Fallback DB) 유사도 계산
         fallback_rag_score, fallback_rag_question = self.similarityRepository.embeddingForFallbackRAG(situation, rag_fallback_result, userToken)

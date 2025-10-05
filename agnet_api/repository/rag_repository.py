@@ -7,7 +7,7 @@ class RagRepository(ABC):
         pass
 
     @abstractmethod
-    def rag_fallback(self, situation: str, userToken: str) -> list:
+    def rag_fallback(self, situation: str, userToken: str = "unknown") -> list:
         pass
 
     @abstractmethod
