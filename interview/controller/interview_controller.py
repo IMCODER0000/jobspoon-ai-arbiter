@@ -78,7 +78,7 @@ async def generateProjectQuestion(
 ):
     print(f" [controller] Received generateProjectQuestion() requestForm: {requestForm}")
     try:
-        response = interviewService.generateProjectQuestion(
+        response = await interviewService.generateProjectQuestion(
             requestForm.toProjectQuestionGenerationRequest()
         )
         return JSONResponse(
@@ -87,7 +87,7 @@ async def generateProjectQuestion(
             headers={"Content-Type": "application/json; charset=UTF-8"}
         )
     except Exception as e:
-        print(f"❌ 프로젝트 고정질문 생성 오류: {str(e)}")
+        print(f"❌ 프로젝트 질문 생성 오류: {str(e)}")
         raise HTTPException(status_code=500, detail="서버 내부 오류 발생")
 
 # 프로젝트 꼬리 질문 생성
@@ -142,6 +142,7 @@ async def getInterviewResult(
 
     task_queue[userToken] = asyncio.Future()
     background_tasks.add_task(interviewService.end_interview_background, request)
+
     return JSONResponse(
         content={"status": "PROCESSING"},
         status_code=202

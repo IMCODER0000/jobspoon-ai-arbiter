@@ -102,18 +102,64 @@ class InterviewRepositoryImpl(InterviewRepository):
         return question
 
     # 프로젝트 질문: 3
-    def generateProjectQuestion(
+    async def generateProjectQuestion(
             self,
             interviewId: int,
             projectExperience: str,
+            projectDescription: str,
             userToken: str
-    ) -> list[str]:
-        print(f" [AI Server] Generating fixed project question for interviewId={interviewId}, userToken={userToken}")
+    ) -> str:
+        print(f" [AI Server] Generating project question for interviewId={interviewId}, userToken={userToken}")
 
-        if projectExperience == "프로젝트 경험 있음":
-            return ["다음 질문은 프로젝트에 관한 질문입니다.\n 어떤 프로젝트를 진행하셨나요? \n 직무에 가장 잘 어필할 수 있는 프로젝트로 말씀해주세요."]
-        else:
-            return ["다음 질문은 프로젝트 혹은 직무 관련 활동에 관한 질문입니다.\n 직무와 관련된 활동을 해보신 경험이 있으신가요?"]
+        # 프로젝트 설명을 기반으로 LLM에게 첫 질문 생성 요청
+        system_prompt = """
+        너는 IT 기업의 실제 면접관이야. 
+        면접자가 제공한 여러 프로젝트 설명을 완벽하게 분석하여, 가장 적절한 프로젝트에 대한 첫 질문을 생성해야 해.
+        
+        규칙:
+        1. 여러 프로젝트 중에서 가장 인상적이거나 직무와 관련성이 높은 프로젝트를 선택할 것
+        2. 선택한 프로젝트 이름을 질문에 반드시 포함할 것
+        3. 질문은 반드시 짧고 명확한 한 문장으로 작성하세요
+        4. 프로젝트의 핵심 내용, 기술 스택, 역할, 문제 해결 경험 등을 파악할 수 있는 질문을 만들어야 해
+        5. 설명, 인삿말, 줄바꿈 등은 포함하지 말고 질문만 출력하세요
+        6. 자연스럽고 구체적인 질문 형태로 작성하세요
+        7. "해당 프로젝트"라는 표현 대신 "{프로젝트 이름} 프로젝트"처럼 구체적으로 언급하세요
+        
+        예시:
+        - Job-Spoon 프로젝트에서 가장 중점을 두고 개발한 기능은 무엇인가요?
+        - ChatBot 프로젝트를 진행하면서 가장 어려웠던 기술적 문제는 무엇이었나요?
+        - E-Commerce 프로젝트에서 본인이 맡은 역할과 기여한 부분을 구체적으로 설명해주세요.
+        - 날씨 알림 서비스 프로젝트의 핵심 기능과 사용한 기술 스택을 설명해주세요.
+        """.strip()
+
+        user_message = f"""
+        면접자의 프로젝트 목록:
+        {projectDescription}
+        
+        위 프로젝트들을 모두 검토하여:
+        1. 가장 인상적이거나 직무와 관련성이 높은 프로젝트를 선택하고
+        2. 해당 프로젝트의 이름을 정확히 파악한 후
+        3. 프로젝트 이름을 포함한 구체적인 첫 질문을 생성해주세요.
+        
+        질문에는 반드시 선택한 프로젝트 이름이 포함되어야 합니다.
+        """
+
+        # GPT 호출
+        response = await client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ]
+        )
+
+        if not response.choices:
+            raise ValueError("GPT 응답이 비어 있음 (choices 없음)")
+
+        question = response.choices[0].message.content.strip()
+
+        print(f" [AI Server] Generated project question: {question}")
+        return question
 
 
     # 프로젝트 꼬리질문 생성: 4

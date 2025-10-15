@@ -1,5 +1,6 @@
 import json
 import asyncio
+import httpx
 from typing import List, Dict
 
 from agnet_api.repository.rag_repository_impl import RagRepositoryImpl
@@ -77,22 +78,24 @@ class InterviewServiceImpl(InterviewService):
         }
 
     # 프로젝트 첫질문 생성
-    def generateProjectQuestion(self, request: ProjectQuestionGenerationRequest) -> dict:
+    async def generateProjectQuestion(self, request: ProjectQuestionGenerationRequest) -> dict:
         interviewId = request.interviewId
         projectExperience = request.projectExperience
+        projectDescription = request.projectDescription
         userToken = request.userToken
         questionId = request.questionId
 
         #print(f" [service] Requesting question generation for interviewId={interviewId}")
 
-        questions = self.interviewRepository.generateProjectQuestion(
-            interviewId, projectExperience, userToken
+        question = await self.interviewRepository.generateProjectQuestion(
+            interviewId, projectExperience, projectDescription, userToken
         )
 
+        # Java 클라이언트가 questions 리스트를 기대하므로 리스트 형태로 반환
         return {
             "interviewId": interviewId,
-            "question": questions,
-            "questionId": questionId + 1
+            "questions": [question],
+            "questionIds": [questionId + 1]
         }
 
     async def generateProjectFollowupQuestion(self, request: ProjectFollowupGenerationRequest) -> dict:
@@ -161,8 +164,41 @@ class InterviewServiceImpl(InterviewService):
         try:
             result = await self.end_interview(request)
             task_queue[userToken].set_result(result)
+            
+            # 콜백 URL이 있으면 서비스 서버에 결과 전송
+            if request.callbackUrl:
+                try:
+                    async with httpx.AsyncClient() as client:
+                        response = await client.post(
+                            request.callbackUrl,
+                            json={
+                                "userToken": request.userToken,
+                                "result": result
+                            },
+                            timeout=30.0
+                        )
+                        print(f"✅ Callback sent successfully: {response.status_code}")
+                except Exception as callback_error:
+                    print(f"❌ Callback failed: {callback_error}")
+
         except Exception as e:
             task_queue[userToken].set_exception(e)
+            
+            # 평가 실패 시에도 콜백 전송
+            if request.callbackUrl:
+                try:
+                    async with httpx.AsyncClient() as client:
+                        await client.post(
+                            request.callbackUrl,
+                            json={
+                                "userToken": request.userToken,
+                                "status": "FAILED",
+                                "error": str(e)
+                            },
+                            timeout=10.0
+                        )
+                except:
+                    pass
 
     async def end_interview(self, request: EndInterviewRequest) -> str:
         #print(f" [Service] end_interview() 호출 - interviewId={request.interviewId}")
@@ -207,6 +243,8 @@ class InterviewServiceImpl(InterviewService):
 
         # 5. 결과에 점수 붙이기
         interviewResult["evaluation_result"] = radarChart
+
+
 
         print(f"{interviewResult}")
         return interviewResult

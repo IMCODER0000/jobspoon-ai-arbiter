@@ -13,7 +13,7 @@ class InterviewService(ABC):
         pass
 
     @abstractmethod
-    def generateProjectQuestion(self, request: dict) -> dict:
+    async def generateProjectQuestion(self, request: dict) -> dict:
         pass
 
     @abstractmethod

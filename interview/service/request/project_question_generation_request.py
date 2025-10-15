@@ -6,3 +6,4 @@ class ProjectQuestionGenerationRequest(BaseModel):
     projectExperience: str
     userToken: str
     questionId: int
+    projectDescription: str

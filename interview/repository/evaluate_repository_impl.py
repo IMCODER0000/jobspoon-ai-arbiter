@@ -104,11 +104,41 @@ class EvaluateRepositoryImpl(EvaluateRepository):
             *[evaluate_qna(q, a) for q, a in zip(questions, answers)]
         )
 
-        # 4. 최종 결과 리턴
+        # 4. 전체 면접 총평 생성
+        overall_prompt = f"""
+        너는 면접 평가 전문가야.
+        아래는 면접자의 전체 질문과 답변이야. 이를 종합적으로 분석해서 총평을 작성해줘.
+        
+        총평은 다음 내용을 포함해야 해:
+        1. **전반적인 인상**: 면접자의 전체적인 답변 수준과 태도
+        2. **강점**: 특히 잘한 부분 (구체적인 예시 포함)
+        3. **개선점**: 보완이 필요한 부분 (구체적인 조언 포함)
+        4. **최종 평가**: 한 줄 요약
+        
+        총평은 5문장 이상으로 작성하고, 격려와 함께 건설적인 피드백을 제공해줘.
+        
+        [전체 면접 내용]
+        {joined_qna}
+        """.strip()
+
+        try:
+            overall_response = await client.chat.completions.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": overall_prompt}],
+                temperature=0.3,
+                max_tokens=800
+            )
+            overall_comment = overall_response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"❌ 총평 생성 실패: {e}")
+            overall_comment = "총평 생성에 실패했습니다."
+
+        # 5. 최종 결과 리턴
         return {
             "interview_id": interview_id,
             "qna": joined_qna,
             "qa_scores": qa_scores,
+            "overall_comment": overall_comment,
             "success": True
         }
 

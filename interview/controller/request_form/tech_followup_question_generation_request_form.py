@@ -1,20 +1,19 @@
 from openai import BaseModel
 
-
-from interview.entity.interview_tech_stack import InterviewTechStack
 from interview.service.request.tech_followup_generation_request import TechFollowupGenerationRequest
 
 
 
 class TechFollowupQuestionGenerationRequestForm(BaseModel):
     interviewId: int
-    techStack: list[int]
+    techStack: list[str]  # 문자열 리스트로 변경 (Java에서 문자열로 보냄)
     questionId: int
     answerText: str
     userToken: str
 
     def toTechFollowupQuestionRequest(self):
-        tech_stack = InterviewTechStack.get_tech_stack_list(self.techStack)
+        # techStack은 이미 문자열 리스트이므로 그대로 사용
+        tech_stack = self.techStack
 
         return TechFollowupGenerationRequest(
             interviewId=self.interviewId,
