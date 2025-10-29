@@ -75,6 +75,8 @@ jobs:
           else
             echo "⚠ docker-compose.yml not found, skipping docker-compose down"
           fi
+          
+          docker network ls | grep jobspoon-net || docker network create jobspoon-net
 
           echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker pull ghcr.io/${REPO_LOWER}:latest
