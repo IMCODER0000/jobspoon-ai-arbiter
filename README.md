@@ -2,7 +2,7 @@
 
 👤 Author: **XXX123** ｜ AI Service Developer ｜ 📧 5012jung@gmail.com ｜ 🔗 [GitHub](https://github.com/uijungyang)
 
-<br>+++
+<br>++++
 
 # 1. Project Description
 ### 💡 JobStick – AI-Powered Mock Interview Platform
