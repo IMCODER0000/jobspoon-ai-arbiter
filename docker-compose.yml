@@ -1,4 +1,3 @@
-version: "3.7"
 services:
   app:
     image: ghcr.io/${GITHUB_ACTOR}/${PROJECT_NAME}:latest
@@ -8,8 +7,9 @@ services:
     env_file:
       - .env
     networks:
-      - app
+      - jobspoon-net
 
 networks:
-  app:
+  jobspoon-net:
     external: true
+
